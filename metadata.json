@@ -1,0 +1,6 @@
+{
+  "name": "TOKIUMテスト制作サイト",
+  "description": "Upload a PDF, and this application will use AI to automatically generate questions and answers, then provide a script to create a Google Form quiz from the content.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
