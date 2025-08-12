@@ -9,13 +9,14 @@ import { extractTextFromPdf } from '../services/pdf';
 import { generateQuizFromText } from '../services/gemini';
 import { generateGoogleAppsScript } from '../services/googleAppsScript';
 import { HeaderIcon, PlayIcon, FileIcon } from './Icons';
+import { useAuth } from '../AuthContext'; // ← useAuthをインポート
 
 interface AdminViewProps {
-  // addQuizがPromise<string>を返すように型定義を修正
   addQuiz: (quizData: { title:string; description: string; items: QuizItem[]; creator: string }) => Promise<string>;
 }
 
 const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
+  const { user } = useAuth(); // ← ログイン中のユーザー情報を取得
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [quizItems, setQuizItems] = useState<QuizItem[]>([]);
@@ -23,7 +24,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [formTitle, setFormTitle] = useState<string>('');
   const [formDescription, setFormDescription] = useState<string>('');
-  const [creatorName, setCreatorName] = useState<string>('');
+  // const [creatorName, setCreatorName] = useState<string>(''); // ← 不要になるので削除
   const [shareableUrl, setShareableUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -67,14 +68,14 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
     }
   }, [selectedFile, questionCount, formTitle]);
 
-  // ↓↓↓ この関数を async に変更 ↓↓↓
   const handleConfirmQuiz = useCallback(async () => {
+    // creatorにログインユーザーの表示名（displayName）を設定
+    const creatorName = user?.displayName || '不明な作成者';
+
     if (quizItems.length > 0) {
       try {
-        // ↓↓↓ addQuizの完了を await で待つように修正 ↓↓↓
         const newQuizId = await addQuiz({ title: formTitle, description: formDescription, items: quizItems, creator: creatorName });
         
-        // newQuizIdが正常に取得できた場合のみURLを生成
         if (newQuizId) {
           const url = `${window.location.origin}${window.location.pathname}#/quiz/${newQuizId}`;
           setShareableUrl(url);
@@ -89,7 +90,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
         setStatus(AppStatus.ERROR);
       }
     }
-  }, [quizItems, formTitle, formDescription, creatorName, addQuiz]);
+  }, [quizItems, formTitle, formDescription, user, addQuiz]); // creatorNameをuserに変更
 
   const handleGenerateScript = useCallback((folderUrl?: string) => {
     if (quizItems.length > 0) {
@@ -106,7 +107,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
     setGeneratedScript('');
     setFormTitle('');
     setFormDescription('');
-    setCreatorName('');
+    // setCreatorName(''); // ← 不要になるので削除
     setShareableUrl(null);
     setSelectedFile(null);
   };
@@ -144,7 +145,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                   id="form-title"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3"
                   placeholder="例：「コンプライアンス研修」理解度テスト"
                   required
                 />
@@ -159,23 +160,22 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                   rows={3}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3"
                   placeholder="例：このテストは、先日実施したコンプライアンス研修の理解度を確認するためのものです。"
                 />
               </div>
               
+              {/* ↓↓↓ 作成者名の入力欄を、表示専用のフィールドに変更 ↓↓↓ */}
               <div>
                 <label htmlFor="creator-name" className="block text-sm font-medium text-gray-700 mb-2">
                   作成者名
                 </label>
-                <input
-                  type="text"
+                <div 
                   id="creator-name"
-                  value={creatorName}
-                  onChange={(e) => setCreatorName(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
-                  placeholder="例：山田 太郎"
-                />
+                  className="w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-500"
+                >
+                  {user?.displayName || '...'}
+                </div>
               </div>
 
               <div>
@@ -186,7 +186,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                   id="question-count"
                   value={questionCount}
                   onChange={(e) => setQuestionCount(Number(e.target.value))}
-                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3"
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
                     <option key={num} value={num}>
@@ -203,7 +203,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                 {!selectedFile ? (
                   <FileUpload onFileProcess={handleFileSelect} />
                 ) : (
-                  <div className="bg-pale-blue-bg/60 p-4 rounded-lg flex items-center justify-between transition-all">
+                  <div className="bg-pale-blue-bg/60 p-4 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileIcon className="w-8 h-8 text-tokium-green flex-shrink-0" />
                       <p className="font-medium text-text-black truncate" title={selectedFile.name}>{selectedFile.name}</p>
