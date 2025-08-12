@@ -1,12 +1,17 @@
-import React from 'react';
+// AdminDashboard.tsx
+
+import React, { useState } from 'react';
 import { Quiz } from '../types';
-import { BackIcon, HeaderIcon } from './Icons';
+// BackIcon, HeaderIcon に加えて、CopyIcon と CheckIcon をインポート
+import { BackIcon, HeaderIcon, CopyIcon, CheckIcon } from './Icons';
 
 interface AdminDashboardProps {
   quizzes: Quiz[];
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
+  // どのクイズがコピーされたかを一時的に覚えるための state
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const formatDateTime = (isoString: string) => {
     if (!isoString) return 'N/A';
@@ -17,6 +22,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    });
+  };
+
+  // URLをクリップボードにコピーする関数
+  const handleCopy = (quizId: string) => {
+    // #/quiz/.. の部分を、完全なURLに組み立てる
+    const url = `${window.location.origin}${window.location.pathname}#/quiz/${quizId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(quizId); // コピー成功をstateに記録
+      setTimeout(() => setCopiedId(null), 2000); // 2秒後に元に戻す
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      alert('コピーに失敗しました。');
     });
   };
 
@@ -65,14 +83,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
                       <td className="px-6 py-4 font-medium">{index + 1}</td>
                       <td className="px-6 py-4 text-gray-900 font-medium">{quiz.title}</td>
                       <td className="px-6 py-4">
-                        <a 
-                          href={`#/quiz/${quiz.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-tokium-green hover:underline font-semibold"
-                        >
-                          クイズを開く
-                        </a>
+                        {/* ↓↓↓ここからが修正箇所↓↓↓ */}
+                        <div className="flex items-center gap-3">
+                          <a 
+                            href={`#/quiz/${quiz.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-tokium-green hover:underline font-semibold"
+                          >
+                            クイズを開く
+                          </a>
+                          <button onClick={() => handleCopy(quiz.id)} className="text-gray-400 hover:text-tokium-green transition-colors">
+                            {copiedId === quiz.id ? <CheckIcon /> : <CopyIcon />}
+                          </button>
+                        </div>
+                        {/* ↑↑↑ここまでが修正箇所↑↑↑ */}
                       </td>
                       <td className="px-6 py-4 text-gray-700">{quiz.creator}</td>
                       <td className="px-6 py-4 text-gray-700">{formatDateTime(quiz.createdAt)}</td>
