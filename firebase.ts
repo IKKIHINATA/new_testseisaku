@@ -1,23 +1,23 @@
 // firebase.ts
 
-import { initializeApp } from "firebase/app";
-// ↓↓↓ この行を確認・修正 ↓↓↓
-import { getFirestore } from "firebase/firestore";
+// ↓↓↓ 互換モードのライブラリをインポート
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 
 // Your web app's Firebase configuration
-// ★★★ここに先ほどコピーしたfirebaseConfigを貼り付け★★★
 const firebaseConfig = {
-    apiKey: "AIzaSyDzrafLrBFJwPmYWQRvUK_o4NRHZkdsNoU",
-    authDomain: "testseisaku.firebaseapp.com",
-    projectId: "testseisaku",
-    storageBucket: "testseisaku.firebasestorage.app",
-    messagingSenderId: "799657270458",
-    appId: "1:799657270458:web:fabeed596f6452337c3683",
-    measurementId: "G-DVBXFBFG5Q"
-  };
+  apiKey: "AIza...", // あなたの実際のAPIキーに置き換えてください
+  authDomain: "your-project-id.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1ab2c3d4e5f67890"
+};
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 // Firestoreデータベースのインスタンスを取得してエクスポート
-export const db = getFirestore(app);
+export const db = firebase.firestore();

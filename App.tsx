@@ -5,27 +5,22 @@ import AdminView from './components/AdminView';
 import QuizView from './components/QuizView';
 import AdminDashboard from './components/AdminDashboard';
 import { Quiz, QuizItem } from './types';
-// Firestoreとの通信に必要な道具をインポート
-// Firestoreとの通信に必要な道具をインポート
-import { collection, addDoc, getDocs } from "firebase/firestore"; 
 // 私たちが作成したFirebase設定ファイルをインポート
 import { db } from './firebase';
 
 const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
-  // quizzesの初期値を空の配列に変更
   const [quizzes, setQuizzes] = useState<Record<string, Quiz>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- Firestoreからデータを読み込む処理 ---
+  // --- Firestoreからデータを読み込む処理（互換モード版） ---
   useEffect(() => {
     const fetchQuizzes = async () => {
       setIsLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "quizzes"));
+        const querySnapshot = await db.collection("quizzes").get();
         const quizzesData: Record<string, Quiz> = {};
         querySnapshot.forEach((doc) => {
-          // FirestoreのドキュメントIDをクイズのIDとして使用
           quizzesData[doc.id] = { ...doc.data(), id: doc.id } as Quiz;
         });
         setQuizzes(quizzesData);
@@ -49,17 +44,15 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // --- Firestoreにデータを保存する処理 ---
+  // --- Firestoreにデータを保存する処理（互換モード版） ---
   const addQuiz = async (quizData: { title: string; description: string; items: QuizItem[], creator: string }): Promise<string> => {
     try {
       const newQuizData = {
         ...quizData,
         createdAt: new Date().toISOString(),
       };
-      // 'quizzes'という名前の本棚（コレクション）に新しいクイズを追加
-      const docRef = await addDoc(collection(db, "quizzes"), newQuizData);
+      const docRef = await db.collection("quizzes").add(newQuizData);
       
-      // stateを更新して、画面に即時反映
       setQuizzes(prevQuizzes => ({
         ...prevQuizzes,
         [docRef.id]: { ...newQuizData, id: docRef.id } as Quiz
@@ -74,7 +67,6 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
-    // データ読み込み中はローディング画面を表示
     if (isLoading) {
       return <div className="flex justify-center items-center min-h-screen">読み込み中...</div>;
     }
