@@ -1,3 +1,5 @@
+// AdminView.tsx
+
 import React, { useState, useCallback } from 'react';
 import { AppStatus, QuizItem } from '../types';
 import FileUpload from './FileUpload';
@@ -9,7 +11,8 @@ import { generateGoogleAppsScript } from '../services/googleAppsScript';
 import { HeaderIcon, PlayIcon, FileIcon } from './Icons';
 
 interface AdminViewProps {
-  addQuiz: (quizData: { title:string; description: string; items: QuizItem[]; creator: string }) => string;
+  // addQuizがPromise<string>を返すように型定義を修正
+  addQuiz: (quizData: { title:string; description: string; items: QuizItem[]; creator: string }) => Promise<string>;
 }
 
 const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
@@ -27,8 +30,6 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
-    
-    // Use functional updates to prevent stale state issues and ensure the button enables correctly.
     setFormTitle(currentTitle => currentTitle ? currentTitle : `「${file.name}」からのクイズ`);
     setFormDescription(currentDescription => currentDescription ? currentDescription : `このクイズは、PDF「${file.name}」の内容に基づいてAIが自動生成したものです。`);
   }, []);
@@ -66,13 +67,21 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
     }
   }, [selectedFile, questionCount, formTitle]);
 
-  const handleConfirmQuiz = useCallback(() => {
+  // ↓↓↓ この関数を async に変更 ↓↓↓
+  const handleConfirmQuiz = useCallback(async () => {
     if (quizItems.length > 0) {
       try {
-        const newQuizId = addQuiz({ title: formTitle, description: formDescription, items: quizItems, creator: creatorName });
-        const url = `${window.location.origin}${window.location.pathname}#/quiz/${newQuizId}`;
-        setShareableUrl(url);
-        alert('クイズが確定され、管理メニューに登録されました。');
+        // ↓↓↓ addQuizの完了を await で待つように修正 ↓↓↓
+        const newQuizId = await addQuiz({ title: formTitle, description: formDescription, items: quizItems, creator: creatorName });
+        
+        // newQuizIdが正常に取得できた場合のみURLを生成
+        if (newQuizId) {
+          const url = `${window.location.origin}${window.location.pathname}#/quiz/${newQuizId}`;
+          setShareableUrl(url);
+          alert('クイズが確定され、管理メニューに登録されました。');
+        } else {
+          throw new Error("Failed to get new Quiz ID");
+        }
       } catch(e) {
         console.error("Quiz confirmation failed", e);
         const errorMessage = e instanceof Error ? e.message : '予期せぬエラーが発生しました。';
@@ -120,105 +129,105 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                className="text-tokium-green hover:underline font-semibold">
                 管理メニュー
             </a>
-        </div>
+         </div>
       </header>
 
       <main className="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         {status === AppStatus.IDLE && (
           <div className="space-y-6">
-             <div>
-              <label htmlFor="form-title" className="block text-sm font-medium text-gray-700 mb-2">
-                フォームのタイトル <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="form-title"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
-                placeholder="例：「コンプライアンス研修」理解度テスト"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="form-description" className="block text-sm font-medium text-gray-700 mb-2">
-                フォームの説明
-              </label>
-              <textarea
-                id="form-description"
-                rows={3}
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
-                placeholder="例：このテストは、先日実施したコンプライアンス研修の理解度を確認するためのものです。"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="creator-name" className="block text-sm font-medium text-gray-700 mb-2">
-                作成者名
-              </label>
-              <input
-                type="text"
-                id="creator-name"
-                value={creatorName}
-                onChange={(e) => setCreatorName(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
-                placeholder="例：山田 太郎"
-              />
-            </div>
+              <div>
+                <label htmlFor="form-title" className="block text-sm font-medium text-gray-700 mb-2">
+                  フォームのタイトル <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="form-title"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                  placeholder="例：「コンプライアンス研修」理解度テスト"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="form-description" className="block text-sm font-medium text-gray-700 mb-2">
+                  フォームの説明
+                </label>
+                <textarea
+                  id="form-description"
+                  rows={3}
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                  placeholder="例：このテストは、先日実施したコンプライアンス研修の理解度を確認するためのものです。"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="creator-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  作成者名
+                </label>
+                <input
+                  type="text"
+                  id="creator-name"
+                  value={creatorName}
+                  onChange={(e) => setCreatorName(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                  placeholder="例：山田 太郎"
+                />
+              </div>
 
-            <div>
-              <label htmlFor="question-count" className="block text-sm font-medium text-gray-700 mb-2">
-                生成する質問の数
-              </label>
-              <select
-                id="question-count"
-                value={questionCount}
-                onChange={(e) => setQuestionCount(Number(e.target.value))}
-                className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
-              >
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                  <option key={num} value={num}>
-                    {num}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div>
+                <label htmlFor="question-count" className="block text-sm font-medium text-gray-700 mb-2">
+                  生成する質問の数
+                </label>
+                <select
+                  id="question-count"
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(Number(e.target.value))}
+                  className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-text-black focus:outline-none focus:ring-2 focus:ring-tokium-green"
+                >
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="space-y-4 pt-2">
-              <label className="block text-sm font-medium text-gray-700">
-                クイズ作成元のPDFファイル <span className="text-red-500">*</span>
-              </label>
-              {!selectedFile ? (
-                <FileUpload onFileProcess={handleFileSelect} />
-              ) : (
-                <div className="bg-pale-blue-bg/60 p-4 rounded-lg flex items-center justify-between transition-all">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <FileIcon className="w-8 h-8 text-tokium-green flex-shrink-0" />
-                    <p className="font-medium text-text-black truncate" title={selectedFile.name}>{selectedFile.name}</p>
+              <div className="space-y-4 pt-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  クイズ作成元のPDFファイル <span className="text-red-500">*</span>
+                </label>
+                {!selectedFile ? (
+                  <FileUpload onFileProcess={handleFileSelect} />
+                ) : (
+                  <div className="bg-pale-blue-bg/60 p-4 rounded-lg flex items-center justify-between transition-all">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <FileIcon className="w-8 h-8 text-tokium-green flex-shrink-0" />
+                      <p className="font-medium text-text-black truncate" title={selectedFile.name}>{selectedFile.name}</p>
+                    </div>
+                    <button 
+                      onClick={() => { setSelectedFile(null); }} 
+                      className="text-sm font-semibold text-tokium-green hover:text-orange transition-colors flex-shrink-0 ml-4 py-1 px-3 rounded-md border border-tokium-green/50 hover:border-orange bg-white shadow-sm"
+                    >
+                      変更
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => { setSelectedFile(null); }} 
-                    className="text-sm font-semibold text-tokium-green hover:text-orange transition-colors flex-shrink-0 ml-4 py-1 px-3 rounded-md border border-tokium-green/50 hover:border-orange bg-white shadow-sm"
-                  >
-                    変更
-                  </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="pt-6 border-t border-gray-200">
-              <button
-                onClick={handleStartGeneration}
-                disabled={!selectedFile || !formTitle}
-                className="w-full bg-tokium-green hover:brightness-95 transition-all text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-lg"
-              >
-                <PlayIcon className="w-6 h-6"/>
-                実行してテストを作成
-              </button>
-            </div>
+              <div className="pt-6 border-t border-gray-200">
+                <button
+                  onClick={handleStartGeneration}
+                  disabled={!selectedFile || !formTitle}
+                  className="w-full bg-tokium-green hover:brightness-95 transition-all text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-lg"
+                >
+                  <PlayIcon className="w-6 h-6"/>
+                  実行してテストを作成
+                </button>
+              </div>
           </div>
         )}
 
