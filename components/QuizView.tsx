@@ -1,18 +1,23 @@
+// components/QuizView.tsx
+
 import React, { useState } from 'react';
 import { Quiz } from '../types';
 import { CheckIcon, HeaderIcon } from './Icons';
 
 interface QuizViewProps {
   quiz: Quiz;
+  // isPreviewという、プレビューモードかどうかを判断するための props を追加
+  isPreview?: boolean;
 }
 
-const QuizView: React.FC<QuizViewProps> = ({ quiz }) => {
+const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
   const handleAnswerChange = (questionIndex: number, option: string) => {
-    if (isSubmitted) return;
+    // プレビューモードの場合は、回答を変更できないようにする
+    if (isSubmitted || isPreview) return;
     setAnswers(prev => ({ ...prev, [questionIndex]: option }));
   };
 
@@ -39,6 +44,13 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz }) => {
   };
 
   const getOptionStyle = (option: string, questionIndex: number) => {
+    // プレビューモードのスタイル
+    if (isPreview) {
+      const isCorrect = option === quiz.items[questionIndex].answer;
+      return isCorrect ? 'bg-light-green/30 border-light-green text-tokium-green font-semibold' : 'bg-gray-100 border-gray-200';
+    }
+
+    // 回答モードのスタイル
     if (!isSubmitted) {
       return answers[questionIndex] === option ? 'bg-tokium-green/20 border-tokium-green' : 'bg-white hover:bg-gray-50';
     }
@@ -61,24 +73,33 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz }) => {
                     <p className="text-gray-600 mt-1">{quiz.description}</p>
                 </div>
             </div>
+            {/* プレビューモードの場合にバッジを表示 */}
+            {isPreview && (
+              <div className="mt-4">
+                <span className="bg-orange/20 text-orange font-bold text-sm px-3 py-1 rounded-full">
+                  プレビューモード (管理者用)
+                </span>
+              </div>
+            )}
         </header>
 
         <div className="bg-white rounded-b-2xl shadow-lg p-6 sm:p-8">
-            {isSubmitted && (
-                <div className="mb-8 p-6 text-center bg-pale-blue-bg rounded-xl">
-                    <h2 className="text-2xl font-bold text-tokium-green">テスト結果</h2>
-                    <p className="text-4xl font-bold my-3">
-                        <span className="text-tokium-green">{score}</span> / {quiz.items.length}
-                    </p>
-                    <p className="text-gray-700">
-                        {score === quiz.items.length ? '素晴らしい！全問正解です！' : 'お疲れ様でした。もう一度挑戦してみましょう。'}
-                    </p>
-                </div>
+            {/* 回答送信済みで、かつプレビューモードでない場合に結果を表示 */}
+            {isSubmitted && !isPreview && (
+              <div className="mb-8 p-6 text-center bg-pale-blue-bg rounded-xl">
+                  <h2 className="text-2xl font-bold text-tokium-green">テスト結果</h2>
+                  <p className="text-4xl font-bold my-3">
+                      <span className="text-tokium-green">{score}</span> / {quiz.items.length}
+                  </p>
+                  <p className="text-gray-700">
+                      {score === quiz.items.length ? '素晴らしい！全問正解です！' : 'お疲れ様でした。もう一度挑戦してみましょう。'}
+                  </p>
+              </div>
             )}
 
             <div className="space-y-8">
             {quiz.items.map((item, index) => (
-                <div key={item.question} className="border-t border-gray-200 pt-6">
+                <div key={item.question} className="border-t border-gray-200 pt-6 first:border-t-0 first:pt-0">
                     <p className="font-semibold text-gray-800 mb-4 text-lg">
                         <span className="text-tokium-green font-bold">問 {index + 1}.</span> {item.question}
                     </p>
@@ -87,9 +108,10 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz }) => {
                         <div
                             key={option}
                             onClick={() => handleAnswerChange(index, option)}
-                            className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all duration-200 ${getOptionStyle(option, index)}`}
+                            // プレビューモードの場合は、クリックできないように見せる
+                            className={`flex items-center p-4 rounded-lg border transition-all duration-200 ${isPreview ? 'cursor-default' : 'cursor-pointer'} ${getOptionStyle(option, index)}`}
                         >
-                            {isSubmitted && option === quiz.items[index].answer && <CheckIcon className="w-6 h-6 mr-3 text-tokium-green" />}
+                            {(isSubmitted || isPreview) && option === quiz.items[index].answer && <CheckIcon className="w-6 h-6 mr-3 text-tokium-green" />}
                             <span className="flex-1">{option}</span>
                         </div>
                         ))}
@@ -98,23 +120,26 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz }) => {
             ))}
             </div>
 
-            <div className="mt-10 pt-6 border-t border-gray-200 text-center">
-            {isSubmitted ? (
-                 <button
-                    onClick={handleRetry}
-                    className="w-full sm:w-auto bg-orange hover:brightness-95 transition-all text-white font-bold py-3 px-8 rounded-lg"
-                >
-                    もう一度挑戦する
-                </button>
-            ) : (
-                <button
-                    onClick={handleSubmit}
-                    className="w-full sm:w-auto bg-tokium-green hover:brightness-95 transition-all text-white font-bold py-3 px-8 rounded-lg"
-                >
-                    回答を送信
-                </button>
+            {/* プレビューモードでない場合のみ、ボタンを表示 */}
+            {!isPreview && (
+              <div className="mt-10 pt-6 border-t border-gray-200 text-center">
+              {isSubmitted ? (
+                  <button
+                      onClick={handleRetry}
+                      className="w-full sm:w-auto bg-orange hover:brightness-95 transition-all text-white font-bold py-3 px-8 rounded-lg"
+                  >
+                      もう一度挑戦する
+                  </button>
+              ) : (
+                  <button
+                      onClick={handleSubmit}
+                      className="w-full sm:w-auto bg-tokium-green hover:brightness-95 transition-all text-white font-bold py-3 px-8 rounded-lg"
+                  >
+                      回答を送信
+                  </button>
+              )}
+              </div>
             )}
-            </div>
         </div>
       </main>
       <footer className="mt-8 text-center text-gray-500 text-sm">

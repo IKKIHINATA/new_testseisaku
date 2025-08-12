@@ -1,10 +1,8 @@
 // App.tsx
 
-import React from 'react';
-// ↓↓↓ 認証関連のインポートを追加 ↓↓↓
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import Login from './Login';
-// ↑↑↑ 認証関連のインポートを追加 ↑↑↑
 import AdminView from './components/AdminView';
 import QuizView from './components/QuizView';
 import AdminDashboard from './components/AdminDashboard';
@@ -13,16 +11,12 @@ import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from './firebase';
 
 const App: React.FC = () => {
-  // --- 既存のロジックは変更なし ---
-  const [currentRoute, setCurrentRoute] = React.useState(window.location.hash);
-  const [quizzes, setQuizzes] = React.useState<Record<string, Quiz>>({});
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  // ↓↓↓ 認証状態を取得 ↓↓↓
+  const [currentRoute, setCurrentRoute] = useState(window.location.hash);
+  const [quizzes, setQuizzes] = useState<Record<string, Quiz>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const { user, loading } = useAuth();
 
-  React.useEffect(() => {
-    // ログインユーザーがいる場合のみデータを取得
+  useEffect(() => {
     if (user) {
       const fetchQuizzes = async () => {
         setIsLoading(true);
@@ -42,9 +36,9 @@ const App: React.FC = () => {
     } else {
       setIsLoading(false);
     }
-  }, [user]); // userが変わるたびに実行
+  }, [user]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleHashChange = () => {
       setCurrentRoute(window.location.hash);
     };
@@ -68,19 +62,14 @@ const App: React.FC = () => {
     }
   };
 
-  // --- ↓↓↓ ここから下の表示ロジックを大幅に変更 ↓↓↓ ---
-
-  // 認証状態の読み込み中は、何も表示しない
   if (loading) {
     return null; 
   }
 
-  // ログインしていない場合は、ログインページを表示
   if (!user) {
     return <Login />;
   }
 
-  // ドメインをチェック
   if (!user.email?.endsWith('@tokium.jp')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
@@ -94,20 +83,26 @@ const App: React.FC = () => {
     );
   }
 
-  // --- ログイン済みで、ドメインも正しい場合の表示ロジック ---
   const renderContent = () => {
     if (isLoading) {
       return <div className="flex justify-center items-center min-h-screen">読み込み中...</div>;
     }
-    const quizMatch = currentRoute.match(/^#\/quiz\/(.+)$/);
-    if (currentRoute === '#/admin') {
-      return <AdminDashboard quizzes={Object.values(quizzes)} />;
-    }
+    
+    // ↓↓↓ここからが修正箇所↓↓↓
+    // URLから #/quiz/ と ?preview=true の部分を分離
+    const [hash, queryString] = currentRoute.split('?');
+    const quizMatch = hash.match(/^#\/quiz\/(.+)$/);
+    
     if (quizMatch) {
       const quizId = quizMatch[1];
       const quiz = quizzes[quizId];
+      
+      // クエリパラメータから isPreview を判定
+      const params = new URLSearchParams(queryString);
+      const isPreview = params.get('preview') === 'true';
+
       if (quiz) {
-        return <QuizView quiz={quiz} />;
+        return <QuizView quiz={quiz} isPreview={isPreview} />;
       } else {
         return (
           <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
@@ -122,7 +117,12 @@ const App: React.FC = () => {
         );
       }
     }
-    // ログイン後のデフォルト画面はAdminView
+    // ↑↑↑ここまでが修正箇所↑↑↑
+
+    if (currentRoute === '#/admin') {
+      return <AdminDashboard quizzes={Object.values(quizzes)} />;
+    }
+    
     return <AdminView addQuiz={addQuiz} />;
   };
 
