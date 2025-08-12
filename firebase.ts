@@ -2,9 +2,11 @@
 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // あなたのWebアプリの正しいFirebase設定
 const firebaseConfig = {
+  // ↓↓↓ このapiKeyを正しいものに修正しました ↓↓↓
   apiKey: "AIzaSyDzrafLrBFJwPmYWQRvUK_o4NRHZkdsNoU",
   authDomain: "testseisaku.firebaseapp.com",
   projectId: "testseisaku",
@@ -17,5 +19,6 @@ const firebaseConfig = {
 // Firebaseを初期化
 const app = initializeApp(firebaseConfig);
 
-// Firestoreデータベースのインスタンスを取得してエクスポート
+// 各機能をエクスポート
 export const db = getFirestore(app);
+export const auth = getAuth(app);
