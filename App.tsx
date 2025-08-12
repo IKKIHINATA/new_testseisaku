@@ -7,7 +7,8 @@ import AdminView from './components/AdminView';
 import QuizView from './components/QuizView';
 import AdminDashboard from './components/AdminDashboard';
 import { Quiz, QuizItem } from './types';
-import { collection, addDoc, getDocs } from "firebase/firestore"; 
+// ↓↓↓ doc と deleteDoc をインポートに追加 ↓↓↓
+import { collection, addDoc, getDocs, doc, deleteDoc } from "firebase/firestore"; 
 import { db } from './firebase';
 
 const App: React.FC = () => {
@@ -62,6 +63,25 @@ const App: React.FC = () => {
     }
   };
 
+  // ↓↓↓ クイズを削除する関数を新しく追加 ↓↓↓
+  const deleteQuiz = async (quizId: string): Promise<void> => {
+    try {
+      // Firestoreからドキュメントを削除
+      await deleteDoc(doc(db, "quizzes", quizId));
+      
+      // 画面（state）からも削除して、即時反映させる
+      setQuizzes(prevQuizzes => {
+        const newQuizzes = { ...prevQuizzes };
+        delete newQuizzes[quizId];
+        return newQuizzes;
+      });
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+      alert("クイズの削除に失敗しました。");
+    }
+  };
+
+
   if (loading) {
     return null; 
   }
@@ -73,12 +93,7 @@ const App: React.FC = () => {
   if (!user.email?.endsWith('@tokium.jp')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg">
-          <h1 className="text-2xl font-bold mb-4 text-red-600">アクセス権がありません</h1>
-          <p className="text-gray-600">
-            このアプリケーションにアクセスするには、`@tokium.jp`ドメインのアカウントでログインする必要があります。
-          </p>
-        </div>
+        {/* ...アクセス権がない場合の表示... */}
       </div>
     );
   }
@@ -88,16 +103,12 @@ const App: React.FC = () => {
       return <div className="flex justify-center items-center min-h-screen">読み込み中...</div>;
     }
     
-    // ↓↓↓ここからが修正箇所↓↓↓
-    // URLから #/quiz/ と ?preview=true の部分を分離
     const [hash, queryString] = currentRoute.split('?');
     const quizMatch = hash.match(/^#\/quiz\/(.+)$/);
     
     if (quizMatch) {
       const quizId = quizMatch[1];
       const quiz = quizzes[quizId];
-      
-      // クエリパラメータから isPreview を判定
       const params = new URLSearchParams(queryString);
       const isPreview = params.get('preview') === 'true';
 
@@ -106,21 +117,15 @@ const App: React.FC = () => {
       } else {
         return (
           <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
-              <h1 className="text-3xl font-bold mb-4">Quiz Not Found</h1>
-              <p className="text-gray-600 mb-6">クイズが見つからないか、削除された可能性があります。</p>
-              <a href="#/" className="bg-tokium-green text-white font-bold py-2 px-4 rounded-lg">
-                作成画面に戻る
-              </a>
-            </div>
+            {/* ...Quiz Not Foundの表示... */}
           </div>
         );
       }
     }
-    // ↑↑↑ここまでが修正箇所↑↑↑
 
     if (currentRoute === '#/admin') {
-      return <AdminDashboard quizzes={Object.values(quizzes)} />;
+      // ↓↓↓ AdminDashboardにdeleteQuiz関数を渡す ↓↓↓
+      return <AdminDashboard quizzes={Object.values(quizzes)} deleteQuiz={deleteQuiz} />;
     }
     
     return <AdminView addQuiz={addQuiz} />;

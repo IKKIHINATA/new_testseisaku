@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { Quiz } from '../types';
-import { BackIcon, HeaderIcon, CopyIcon, CheckIcon } from './Icons';
+import { BackIcon, HeaderIcon, CopyIcon, CheckIcon, TrashIcon } from './Icons';
 import { useAuth } from '../AuthContext';
 
 interface AdminDashboardProps {
   quizzes: Quiz[];
+  deleteQuiz: (quizId: string) => Promise<void>;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) => {
   const { user } = useAuth();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -34,6 +35,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
       console.error('Failed to copy: ', err);
       alert('コピーに失敗しました。');
     });
+  };
+  
+  const handleDelete = async (quizId: string, quizTitle: string) => {
+    if (window.confirm(`本当に「${quizTitle}」を削除しますか？\nこの操作は元に戻せません。`)) {
+      try {
+        await deleteQuiz(quizId);
+      } catch (error) {
+        console.error("Failed to delete quiz: ", error);
+        alert("クイズの削除に失敗しました。");
+      }
+    }
   };
 
   return (
@@ -64,14 +76,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
         
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            {/* ▼▼▼ Changed table-fixed to table-auto for flexible widths ▼▼▼ */}
+            <table className="w-full text-left text-sm table-auto">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 tracking-wider">No.</th>
-                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 tracking-wider">フォームのタイトル</th>
-                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 tracking-wider">フォームURL</th>
-                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 tracking-wider">作成者</th>
-                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 tracking-wider">作成日時</th>
+                  {/* ▼▼▼ Adjusted width and whitespace classes ▼▼▼ */}
+                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 w-16">No.</th>
+                  <th scope="col" className="px-6 py-3 font-medium text-gray-600">フォームのタイトル</th>
+                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 whitespace-nowrap">フォームURL</th>
+                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 whitespace-nowrap">作成者</th>
+                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 whitespace-nowrap">作成日時</th>
+                  <th scope="col" className="px-6 py-3 font-medium text-gray-600 text-right w-16">削除</th>
+                  {/* ▲▲▲ Adjusted width and whitespace classes ▲▲▲ */}
                 </tr>
               </thead>
               <tbody>
@@ -79,15 +95,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
                   [...quizzes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((quiz, index) => (
                     <tr key={quiz.id} className="border-b border-gray-200 last:border-b-0 hover:bg-pale-blue-bg/40">
                       <td className="px-6 py-4 font-medium">{index + 1}</td>
-                      <td className="px-6 py-4 text-gray-900 font-medium">{quiz.title}</td>
+                      <td className="px-6 py-4 text-gray-900 font-medium truncate" title={quiz.title}>{quiz.title}</td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <a 
-                            href={`#/quiz/${quiz.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-tokium-green hover:underline font-semibold"
-                          >
+                        <div className="flex items-center gap-3 whitespace-nowrap">
+                          <a href={`#/quiz/${quiz.id}`} target="_blank" rel="noopener noreferrer" className="text-tokium-green hover:underline font-semibold">
                             クイズを開く
                           </a>
                           <button onClick={() => handleCopy(quiz.id)} className="text-gray-400 hover:text-tokium-green transition-colors">
@@ -95,28 +106,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes }) => {
                           </button>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-700">
-                        {/* ↓↓↓ここからが修正箇所↓↓↓ */}
-                        {user && user.displayName === quiz.creator ? (
-                          <a
-                            href={`#/quiz/${quiz.id}?preview=true`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-tokium-green hover:underline font-semibold"
+                      <td className="px-6 py-4 text-gray-700 truncate">{quiz.creator}</td>
+                      <td className="px-6 py-4 text-gray-700 whitespace-nowrap">{formatDateTime(quiz.createdAt)}</td>
+                      <td className="px-6 py-4 text-right">
+                        {user && user.displayName === quiz.creator && (
+                          <button
+                            onClick={() => handleDelete(quiz.id, quiz.title)}
+                            className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md"
+                            title="このクイズを削除"
                           >
-                            {quiz.creator}
-                          </a>
-                        ) : (
-                          <span>{quiz.creator}</span>
+                            <TrashIcon />
+                          </button>
                         )}
-                        {/* ↑↑↑ここまでが修正箇所↑↑↑ */}
                       </td>
-                      <td className="px-6 py-4 text-gray-700">{formatDateTime(quiz.createdAt)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="text-center py-16 text-gray-500">
+                    <td colSpan={6} className="text-center py-16 text-gray-500">
                       作成されたクイズはまだありません。
                     </td>
                   </tr>
