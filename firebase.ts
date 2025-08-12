@@ -1,8 +1,7 @@
 // firebase.ts
 
-// ↓↓↓ 互換モードのライブラリをインポート
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,9 +14,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+const app = initializeApp(firebaseConfig);
 
 // Firestoreデータベースのインスタンスを取得してエクスポート
-export const db = firebase.firestore();
+export const db = getFirestore(app);

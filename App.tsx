@@ -5,7 +5,7 @@ import AdminView from './components/AdminView';
 import QuizView from './components/QuizView';
 import AdminDashboard from './components/AdminDashboard';
 import { Quiz, QuizItem } from './types';
-// 私たちが作成したFirebase設定ファイルをインポート
+import { collection, addDoc, getDocs } from "firebase/firestore"; 
 import { db } from './firebase';
 
 const App: React.FC = () => {
@@ -13,12 +13,11 @@ const App: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Record<string, Quiz>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- Firestoreからデータを読み込む処理（互換モード版） ---
   useEffect(() => {
     const fetchQuizzes = async () => {
       setIsLoading(true);
       try {
-        const querySnapshot = await db.collection("quizzes").get();
+        const querySnapshot = await getDocs(collection(db, "quizzes"));
         const quizzesData: Record<string, Quiz> = {};
         querySnapshot.forEach((doc) => {
           quizzesData[doc.id] = { ...doc.data(), id: doc.id } as Quiz;
@@ -29,7 +28,6 @@ const App: React.FC = () => {
       }
       setIsLoading(false);
     };
-
     fetchQuizzes();
   }, []);
 
@@ -44,20 +42,18 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // --- Firestoreにデータを保存する処理（互換モード版） ---
   const addQuiz = async (quizData: { title: string; description: string; items: QuizItem[], creator: string }): Promise<string> => {
     try {
       const newQuizData = {
         ...quizData,
         createdAt: new Date().toISOString(),
       };
-      const docRef = await db.collection("quizzes").add(newQuizData);
+      const docRef = await addDoc(collection(db, "quizzes"), newQuizData);
       
       setQuizzes(prevQuizzes => ({
         ...prevQuizzes,
         [docRef.id]: { ...newQuizData, id: docRef.id } as Quiz
       }));
-
       return docRef.id;
     } catch (e) {
       console.error("Error adding document: ", e);
@@ -70,13 +66,10 @@ const App: React.FC = () => {
     if (isLoading) {
       return <div className="flex justify-center items-center min-h-screen">読み込み中...</div>;
     }
-
     const quizMatch = currentRoute.match(/^#\/quiz\/(.+)$/);
-
     if (currentRoute === '#/admin') {
       return <AdminDashboard quizzes={Object.values(quizzes)} />;
     }
-    
     if (quizMatch) {
       const quizId = quizMatch[1];
       const quiz = quizzes[quizId];
