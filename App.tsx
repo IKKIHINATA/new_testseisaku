@@ -6,6 +6,7 @@ import QuizView from './components/QuizView';
 import AdminDashboard from './components/AdminDashboard';
 import { Quiz, QuizItem } from './types';
 // Firestoreとの通信に必要な道具をインポート
+// Firestoreとの通信に必要な道具をインポート
 import { collection, addDoc, getDocs } from "firebase/firestore"; 
 // 私たちが作成したFirebase設定ファイルをインポート
 import { db } from './firebase';

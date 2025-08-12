@@ -1,6 +1,7 @@
 // firebase.ts
 
 import { initializeApp } from "firebase/app";
+// ↓↓↓ この行を確認・修正 ↓↓↓
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
