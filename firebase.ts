@@ -3,17 +3,18 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
+// あなたのWebアプリの正しいFirebase設定
 const firebaseConfig = {
-  apiKey: "AIza...", // あなたの実際のAPIキーに置き換えてください
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1ab2c3d4e5f67890"
+  apiKey: "AIzaSyDzrafLrBFJwPmYWQRvUK_o4NRHZkdsNoU",
+  authDomain: "testseisaku.firebaseapp.com",
+  projectId: "testseisaku",
+  storageBucket: "testseisaku.firebasestorage.app",
+  messagingSenderId: "799657270458",
+  appId: "1:799657270458:web:fabeed596f6452337c3683",
+  measurementId: "G-DVBXFBFG5Q"
 };
 
-// Initialize Firebase
+// Firebaseを初期化
 const app = initializeApp(firebaseConfig);
 
 // Firestoreデータベースのインスタンスを取得してエクスポート
