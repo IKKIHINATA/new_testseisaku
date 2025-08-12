@@ -9,14 +9,17 @@ import { extractTextFromPdf } from '../services/pdf';
 import { generateQuizFromText } from '../services/gemini';
 import { generateGoogleAppsScript } from '../services/googleAppsScript';
 import { HeaderIcon, PlayIcon, FileIcon } from './Icons';
-import { useAuth } from '../AuthContext'; // ← useAuthをインポート
+import { useAuth } from '../AuthContext';
+// ↓↓↓ Firebaseの認証機能（auth）と、signOut関数をインポート ↓↓↓
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
 interface AdminViewProps {
   addQuiz: (quizData: { title:string; description: string; items: QuizItem[]; creator: string }) => Promise<string>;
 }
 
 const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
-  const { user } = useAuth(); // ← ログイン中のユーザー情報を取得
+  const { user } = useAuth();
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [quizItems, setQuizItems] = useState<QuizItem[]>([]);
@@ -24,10 +27,22 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [formTitle, setFormTitle] = useState<string>('');
   const [formDescription, setFormDescription] = useState<string>('');
-  // const [creatorName, setCreatorName] = useState<string>(''); // ← 不要になるので削除
   const [shareableUrl, setShareableUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // ↓↓↓ ログアウト処理の関数を追加 ↓↓↓
+  const handleLogout = async () => {
+    if (window.confirm('ログアウトしますか？')) {
+      try {
+        await signOut(auth);
+        // ログアウト後、ページをリロードしてログイン画面に戻す
+        window.location.reload();
+      } catch (error) {
+        console.error("Logout failed", error);
+        alert('ログアウトに失敗しました。');
+      }
+    }
+  };
 
   const handleFileSelect = useCallback((file: File) => {
     setSelectedFile(file);
@@ -69,9 +84,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
   }, [selectedFile, questionCount, formTitle]);
 
   const handleConfirmQuiz = useCallback(async () => {
-    // creatorにログインユーザーの表示名（displayName）を設定
     const creatorName = user?.displayName || '不明な作成者';
-
     if (quizItems.length > 0) {
       try {
         const newQuizId = await addQuiz({ title: formTitle, description: formDescription, items: quizItems, creator: creatorName });
@@ -90,7 +103,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
         setStatus(AppStatus.ERROR);
       }
     }
-  }, [quizItems, formTitle, formDescription, user, addQuiz]); // creatorNameをuserに変更
+  }, [quizItems, formTitle, formDescription, user, addQuiz]);
 
   const handleGenerateScript = useCallback((folderUrl?: string) => {
     if (quizItems.length > 0) {
@@ -107,31 +120,41 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
     setGeneratedScript('');
     setFormTitle('');
     setFormDescription('');
-    // setCreatorName(''); // ← 不要になるので削除
     setShareableUrl(null);
     setSelectedFile(null);
   };
 
   return (
     <div className="min-h-screen text-text-black flex flex-col items-center p-4 sm:p-6 lg:p-8">
-      <header className="w-full max-w-4xl text-center mb-12">
-        <div className="flex items-center justify-center gap-4 mb-2">
-            <HeaderIcon />
-            <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-tokium-green to-light-green">
-              TOKIUMテスト制作サイト
-            </h1>
+      {/* ↓↓↓ ヘッダー部分を修正 ↓↓↓ */}
+      <header className="w-full max-w-4xl mb-12">
+        <div className="text-center">
+            <div className="flex items-center justify-center gap-4 mb-2">
+                <HeaderIcon />
+                <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-tokium-green to-light-green">
+                  TOKIUMテスト制作サイト
+                </h1>
+            </div>
+            <p className="text-gray-600 text-lg">
+              アップロードされたPDFを参照して、AIがクイズを自動生成します。
+            </p>
         </div>
-        <p className="text-gray-600 text-lg">
-          アップロードされたPDFを参照して、AIがクイズを自動生成します。
-        </p>
-         <div className="mt-4 text-right">
-            <a href="#/admin"
-               onClick={(e) => { e.preventDefault(); window.location.hash = '#/admin'; }}
-               className="text-tokium-green hover:underline font-semibold">
-                管理メニュー
-            </a>
-         </div>
-      </header>
+        {/* ログアウトと管理メニューを横並びにするためのdiv */}
+        <div className="mt-4 flex flex-col items-end gap-1">
+      <button
+          onClick={handleLogout}
+          className="text-gray-500 hover:text-tokium-green hover:underline font-semibold transition-colors text-sm"
+      >
+          ログアウト
+      </button>
+      <a href="#/admin"
+         onClick={(e) => { e.preventDefault(); window.location.hash = '#/admin'; }}
+         className="text-tokium-green hover:underline font-semibold">
+          管理メニュー
+      </a>
+  </div>
+</header>
+      {/* ↑↑↑ ヘッダー部分の修正ここまで ↑↑↑ */}
 
       <main className="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         {status === AppStatus.IDLE && (
@@ -165,7 +188,6 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                 />
               </div>
               
-              {/* ↓↓↓ 作成者名の入力欄を、表示専用のフィールドに変更 ↓↓↓ */}
               <div>
                 <label htmlFor="creator-name" className="block text-sm font-medium text-gray-700 mb-2">
                   作成者名
