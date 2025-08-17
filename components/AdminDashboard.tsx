@@ -1,9 +1,9 @@
+// AdminDashboard.tsx
 
 import React, { useState } from 'react';
 import { Quiz } from '../types';
 import { BackIcon, HeaderIcon, CopyIcon, CheckIcon, TrashIcon } from './Icons';
 import { useAuth } from '../AuthContext';
-// ▼▼▼ TanStack Tableに必要なフックや関数をインポート ▼▼▼
 import {
   useReactTable,
   getCoreRowModel,
@@ -51,13 +51,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
     }
   };
 
-  // ▼▼▼ TanStack Tableで表示する列の定義 ▼▼▼
   const columns = React.useMemo<ColumnDef<Quiz>[]>(
     () => [
       {
         accessorFn: (row, index) => index + 1,
         header: 'No.',
-        size: 60, // 初期サイズ（ピクセル）
+        size: 60,
       },
       {
         accessorKey: 'title',
@@ -65,7 +64,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
         size: 500,
       },
       {
-        id: 'formUrl', // accessorKeyがない場合はidが必要
+        id: 'formUrl',
         header: 'フォームURL',
         cell: ({ row }) => (
           <div className="flex items-center gap-3 whitespace-nowrap">
@@ -114,28 +113,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
         size: 80,
       },
     ],
-    [quizzes, user, copiedId] // 依存配列を更新
+    [quizzes, user, copiedId]
   );
   
-  // ソートされたデータを準備
   const sortedData = React.useMemo(
     () => [...quizzes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [quizzes]
   );
 
-  // ▼▼▼ TanStack Tableのフックを呼び出し ▼▼▼
   const table = useReactTable({
     data: sortedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    columnResizeMode: 'onChange', // 列のサイズ変更モード
+    columnResizeMode: 'onChange',
   });
 
   return (
     <div className="min-h-screen bg-gray-bg text-text-black flex flex-col items-center p-4 sm:p-6 lg:p-8">
+      {/* ▼▼▼ This header section was re-added ▼▼▼ */}
       <header className="w-full max-w-6xl text-center mb-12">
-        {/* ...ヘッダー部分は変更なし... */}
+        <div className="flex items-center justify-center gap-4 mb-2">
+            <HeaderIcon />
+            <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-tokium-green to-light-green">
+              管理メニュー
+            </h1>
+        </div>
+        <p className="text-gray-600 text-lg">
+          これまでに作成されたクイズの一覧です。
+        </p>
       </header>
+      {/* ▲▲▲ This header section was re-added ▲▲▲ */}
 
       <main className="w-full max-w-6xl">
         <div className="flex justify-start mb-6">
@@ -151,10 +158,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
         
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
-            {/* ▼▼▼ TanStack Tableの構造でテーブルを描画 ▼▼▼ */}
             <table 
               className="w-full text-left text-sm"
-              style={{ width: table.getCenterTotalSize() }} // テーブル全体の幅を動的に設定
+              style={{ width: table.getCenterTotalSize() }}
             >
               <thead className="bg-gray-50 border-b border-gray-200">
                 {table.getHeaderGroups().map(headerGroup => (
@@ -164,10 +170,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
                         key={header.id}
                         scope="col" 
                         className="px-6 py-3 font-medium text-gray-600 relative"
-                        style={{ width: header.getSize() }} // 各列の幅を動的に設定
+                        style={{ width: header.getSize() }}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {/* 列の幅を変更するためのハンドル */}
                         <div
                           onMouseDown={header.getResizeHandler()}
                           onTouchStart={header.getResizeHandler()}
@@ -186,7 +191,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
                         <td 
                           key={cell.id}
                           className="px-6 py-4 truncate"
-                          style={{ width: cell.column.getSize() }} // 各セルの幅を動的に設定
+                          style={{ width: cell.column.getSize() }}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
