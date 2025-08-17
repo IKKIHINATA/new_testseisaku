@@ -52,7 +52,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
   };
 
 // AdminDashboard.tsx の const columns = ... の部分を全部これに差し替え！
-
   const columns = React.useMemo<ColumnDef<Quiz>[]>(
       () => [
         {
@@ -153,6 +152,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
       </header>
 
       <main className="w-full max-w-6xl">
+      <div className="flex justify-end mb-2">
+          <a 
+            href="#/feedback"
+            className="text-tokium-green hover:underline font-semibold transition-colors"
+          >
+            機能要望・バグ報告はこちら
+          </a>
+        </div>
+        {/* ▲▲▲ ここまで ▲▲▲ */}
         <div className="flex justify-start mb-1">
         {/* ▼▼▼ Added whitespace-nowrap to prevent line breaks ▼▼▼ */}
           <a
