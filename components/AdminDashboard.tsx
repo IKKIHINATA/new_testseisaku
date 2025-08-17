@@ -130,8 +130,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
 
   return (
     <div className="min-h-screen bg-gray-bg text-text-black flex flex-col items-center p-4 sm:p-6 lg:p-8">
-      {/* ▼▼▼ Changed mb-12 to mb-0.5 to reduce space ▼▼▼ */}
-      <header className="w-full max-w-6xl text-center mb-0.5">
+      <header className="w-full max-w-6xl text-center mb-1">
         <div className="flex items-center justify-center gap-4 mb-2">
             <HeaderIcon />
             <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-tokium-green to-light-green">
@@ -142,15 +141,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
           これまでに作成されたクイズの一覧です。
         </p>
       </header>
-      {/* ▲▲▲ Changed mb-12 to mb-0.5 to reduce space ▲▲▲ */}
 
       <main className="w-full max-w-6xl">
-        <div className="flex justify-start mb-0.5">
+        <div className="flex justify-start mb-1">
+        {/* ▼▼▼ Added whitespace-nowrap to prevent line breaks ▼▼▼ */}
           <a
             href="#/"
             onClick={(e) => { e.preventDefault(); window.location.hash = '#/'; }}
-            className="bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg"
+            className="bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 whitespace-nowrap"
           >
+        {/* ▲▲▲ Added whitespace-nowrap to prevent line breaks ▲▲▲ */}
             <BackIcon />
             作成画面に戻る
           </a>
