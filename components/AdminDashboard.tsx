@@ -130,8 +130,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
 
   return (
     <div className="min-h-screen bg-gray-bg text-text-black flex flex-col items-center p-4 sm:p-6 lg:p-8">
-      {/* ▼▼▼ This header section was re-added ▼▼▼ */}
-      <header className="w-full max-w-6xl text-center mb-12">
+      {/* ▼▼▼ Changed mb-12 to mb-0.5 to reduce space ▼▼▼ */}
+      <header className="w-full max-w-6xl text-center mb-0.5">
         <div className="flex items-center justify-center gap-4 mb-2">
             <HeaderIcon />
             <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-tokium-green to-light-green">
@@ -142,10 +142,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
           これまでに作成されたクイズの一覧です。
         </p>
       </header>
-      {/* ▲▲▲ This header section was re-added ▲▲▲ */}
+      {/* ▲▲▲ Changed mb-12 to mb-0.5 to reduce space ▲▲▲ */}
 
       <main className="w-full max-w-6xl">
-        <div className="flex justify-start mb-6">
+        <div className="flex justify-start mb-0.5">
           <a
             href="#/"
             onClick={(e) => { e.preventDefault(); window.location.hash = '#/'; }}
