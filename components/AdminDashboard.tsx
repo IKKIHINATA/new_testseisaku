@@ -152,25 +152,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
       </header>
 
       <main className="w-full max-w-6xl">
-      <div className="flex justify-end mb-2">
-          <a 
-            href="#/feedback"
-            className="text-tokium-green hover:underline font-semibold transition-colors"
-          >
-            機能要望・バグ報告はこちら
-          </a>
-        </div>
-        {/* ▲▲▲ ここまで ▲▲▲ */}
-        <div className="flex justify-start mb-1">
-        {/* ▼▼▼ Added whitespace-nowrap to prevent line breaks ▼▼▼ */}
+      <div className="flex justify-between items-center mb-2">
+          {/* 左側に「戻るボタン」 */}
           <a
             href="#/"
             onClick={(e) => { e.preventDefault(); window.location.hash = '#/'; }}
             className="bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 whitespace-nowrap"
           >
-        {/* ▲▲▲ Added whitespace-nowrap to prevent line breaks ▲▲▲ */}
             <BackIcon />
             作成画面に戻る
+          </a>
+          
+          {/* 右側に「要望リンク」 */}
+          <a
+            href="#/feedback"
+            className="text-tokium-green hover:underline font-semibold transition-colors text-sm"
+          >
+            機能要望・バグ報告はこちら
           </a>
         </div>
         
