@@ -11,6 +11,7 @@ export interface Quiz {
   items: QuizItem[];
   creator: string;
   createdAt: string;
+  responseCount?: number;
 }
 
 export enum AppStatus {

@@ -51,70 +51,80 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ quizzes, deleteQuiz }) 
     }
   };
 
-  const columns = React.useMemo<ColumnDef<Quiz>[]>(
-    () => [
-      {
-        accessorFn: (row, index) => index + 1,
-        header: 'No.',
-        size: 60,
-      },
-      {
-        accessorKey: 'title',
-        header: 'フォームのタイトル',
-        size: 500,
-      },
-      {
-        id: 'formUrl',
-        header: 'フォームURL',
-        cell: ({ row }) => (
-          <div className="flex items-center gap-3 whitespace-nowrap">
-            <a href={`#/quiz/${row.original.id}`} target="_blank" rel="noopener noreferrer" className="text-tokium-green hover:underline font-semibold">
-              クイズを開く
-            </a>
-            <button onClick={() => handleCopy(row.original.id)} className="text-gray-400 hover:text-tokium-green transition-colors">
-              {copiedId === row.original.id ? <CheckIcon /> : <CopyIcon />}
-            </button>
-          </div>
-        ),
-        size: 180,
-      },
-      {
-        accessorKey: 'creator',
-        header: '作成者',
-        cell: ({ getValue, row }) => user && user.displayName === getValue() ? (
-          <a href={`#/quiz/${row.original.id}?preview=true`} target="_blank" rel="noopener noreferrer" className="text-tokium-green hover:underline font-semibold">
-            {getValue() as string}
-          </a>
-        ) : (
-          <span>{getValue() as string}</span>
-        ),
-        size: 180,
-      },
-      {
-        accessorKey: 'createdAt',
-        header: '作成日時',
-        cell: info => formatDateTime(info.getValue() as string),
-        size: 200,
-      },
-      {
-        id: 'delete',
-        header: '削除',
-        cell: ({ row }) => user && user.displayName === row.original.creator && (
-          <div className="text-right">
-            <button
-              onClick={() => handleDelete(row.original.id, row.original.title)}
-              className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md"
-              title="このクイズを削除"
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        ),
-        size: 80,
-      },
-    ],
-    [quizzes, user, copiedId]
-  );
+// AdminDashboard.tsx の const columns = ... の部分を全部これに差し替え！
+
+  const columns = React.useMemo<ColumnDef<Quiz>[]>(
+      () => [
+        {
+          accessorFn: (row, index) => index + 1,
+          header: 'No.',
+          size: 60,
+        },
+        {
+          accessorKey: 'title',
+          header: 'フォームのタイトル',
+          size: 500,
+        },
+        {
+          id: 'formUrl',
+          header: 'フォームURL',
+          cell: ({ row }) => (
+            <div className="flex items-center gap-3 whitespace-nowrap">
+              <a href={`#/quiz/${row.original.id}`} target="_blank" rel="noopener noreferrer" className="text-tokium-green hover:underline font-semibold">
+                クイズを開く
+              </a>
+              <button onClick={() => handleCopy(row.original.id)} className="text-gray-400 hover:text-tokium-green transition-colors">
+                {copiedId === row.original.id ? <CheckIcon /> : <CopyIcon />}
+              </button>
+            </div>
+          ),
+          size: 180,
+        },
+        // ▼▼▼ ここからが追加ブロック ▼▼▼
+        {
+          accessorKey: 'responseCount',
+          header: '回答数',
+          cell: (info) => (info.getValue() as number) || 0,
+          size: 100,
+        },
+        // ▲▲▲ ここまでが追加ブロック ▲▲▲
+        {
+          accessorKey: 'creator',
+          header: '作成者',
+          cell: ({ getValue, row }) => user && user.displayName === getValue() ? (
+            <a href={`#/quiz/${row.original.id}?preview=true`} target="_blank" rel="noopener noreferrer" className="text-tokium-green hover:underline font-semibold">
+              {getValue() as string}
+            </a>
+          ) : (
+            <span>{getValue() as string}</span>
+          ),
+          size: 180,
+        },
+        {
+          accessorKey: 'createdAt',
+          header: '作成日時',
+          cell: info => formatDateTime(info.getValue() as string),
+          size: 200,
+        },
+        {
+          id: 'delete',
+          header: '削除',
+          cell: ({ row }) => user && user.displayName === row.original.creator && (
+            <div className="text-right">
+              <button
+                onClick={() => handleDelete(row.original.id, row.original.title)}
+                className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md"
+                title="このクイズを削除"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          ),
+          size: 80,
+        },
+      ],
+      [quizzes, user, copiedId]
+    );
   
   const sortedData = React.useMemo(
     () => [...quizzes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),

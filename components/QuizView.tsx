@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import { Quiz } from '../types';
 import { CheckIcon, HeaderIcon } from './Icons';
+import { db } from '../firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 interface QuizViewProps {
   quiz: Quiz;
-  // isPreviewという、プレビューモードかどうかを判断するための props を追加
   isPreview?: boolean;
 }
 
@@ -16,25 +17,40 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
   const [score, setScore] = useState(0);
 
   const handleAnswerChange = (questionIndex: number, option: string) => {
-    // プレビューモードの場合は、回答を変更できないようにする
     if (isSubmitted || isPreview) return;
     setAnswers(prev => ({ ...prev, [questionIndex]: option }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isPreview) {
+      return;
+    }
+
     if (Object.keys(answers).length !== quiz.items.length) {
       alert('すべての質問に回答してください。');
       return;
     }
-    let correctCount = 0;
-    quiz.items.forEach((item, index) => {
-      if (answers[index] === item.answer) {
-        correctCount++;
-      }
-    });
-    setScore(correctCount);
-    setIsSubmitted(true);
-    window.scrollTo(0, 0); 
+
+    try {
+      const quizRef = doc(db, 'quizzes', quiz.id);
+      await updateDoc(quizRef, {
+        responseCount: increment(1)
+      });
+
+      let correctCount = 0;
+      quiz.items.forEach((item, index) => {
+        if (answers[index] === item.answer) {
+          correctCount++;
+        }
+      });
+      setScore(correctCount);
+      setIsSubmitted(true);
+      window.scrollTo(0, 0);
+
+    } catch (error) {
+      console.error("回答数の更新に失敗しました: ", error);
+      alert("エラーが発生しました。回答を送信できませんでした。");
+    }
   };
   
   const handleRetry = () => {
@@ -44,13 +60,11 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
   };
 
   const getOptionStyle = (option: string, questionIndex: number) => {
-    // プレビューモードのスタイル
     if (isPreview) {
       const isCorrect = option === quiz.items[questionIndex].answer;
       return isCorrect ? 'bg-light-green/30 border-light-green text-tokium-green font-semibold' : 'bg-gray-100 border-gray-200';
     }
 
-    // 回答モードのスタイル
     if (!isSubmitted) {
       return answers[questionIndex] === option ? 'bg-tokium-green/20 border-tokium-green' : 'bg-white hover:bg-gray-50';
     }
@@ -73,7 +87,6 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
                     <p className="text-gray-600 mt-1">{quiz.description}</p>
                 </div>
             </div>
-            {/* プレビューモードの場合にバッジを表示 */}
             {isPreview && (
               <div className="mt-4">
                 <span className="bg-orange/20 text-orange font-bold text-sm px-3 py-1 rounded-full">
@@ -84,7 +97,6 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
         </header>
 
         <div className="bg-white rounded-b-2xl shadow-lg p-6 sm:p-8">
-            {/* 回答送信済みで、かつプレビューモードでない場合に結果を表示 */}
             {isSubmitted && !isPreview && (
               <div className="mb-8 p-6 text-center bg-pale-blue-bg rounded-xl">
                   <h2 className="text-2xl font-bold text-tokium-green">テスト結果</h2>
@@ -108,7 +120,6 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
                         <div
                             key={option}
                             onClick={() => handleAnswerChange(index, option)}
-                            // プレビューモードの場合は、クリックできないように見せる
                             className={`flex items-center p-4 rounded-lg border transition-all duration-200 ${isPreview ? 'cursor-default' : 'cursor-pointer'} ${getOptionStyle(option, index)}`}
                         >
                             {(isSubmitted || isPreview) && option === quiz.items[index].answer && <CheckIcon className="w-6 h-6 mr-3 text-tokium-green" />}
@@ -120,7 +131,6 @@ const QuizView: React.FC<QuizViewProps> = ({ quiz, isPreview = false }) => {
             ))}
             </div>
 
-            {/* プレビューモードでない場合のみ、ボタンを表示 */}
             {!isPreview && (
               <div className="mt-10 pt-6 border-t border-gray-200 text-center">
               {isSubmitted ? (
