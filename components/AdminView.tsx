@@ -127,7 +127,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
   return (
     <div className="min-h-screen text-text-black flex flex-col items-center p-4 sm:p-6 lg:p-8">
       {/* ↓↓↓ ヘッダー部分を修正 ↓↓↓ */}
-      <header className="w-full max-w-4xl mb-12">
+      <header className="w-full max-w-4xl mb-4">
         <div className="text-center">
             <div className="flex items-center justify-center gap-4 mb-2">
                 <HeaderIcon />
@@ -210,7 +210,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
                   onChange={(e) => setQuestionCount(Number(e.target.value))}
                   className="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3"
                 >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                  {Array.from({ length: 50 }, (_, i) => i + 1).map((num) => (
                     <option key={num} value={num}>
                       {num}
                     </option>
@@ -287,7 +287,7 @@ const AdminView: React.FC<AdminViewProps> = ({ addQuiz }) => {
       </main>
 
        <footer className="mt-8 text-center text-gray-500 text-sm">
-          <p>© 2024 TOKIUM INC.</p>
+          <p>© 2025 TOKIUM INC.</p>
       </footer>
     </div>
   );
