@@ -58,7 +58,8 @@ const FeedbackForm: React.FC = () => {
       </header>
 
       <main className="w-full max-w-2xl mt-4">
-        <div className="flex justify-start mb-1">
+        {/* ▼▼▼ このブロックを書き換える ▼▼▼ */}
+        <div className="flex justify-between items-center mb-2">
           <a
             href="#/admin"
             className="bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2"
@@ -66,7 +67,14 @@ const FeedbackForm: React.FC = () => {
             <BackIcon />
             管理メニューに戻る
           </a>
+          <a 
+            href="#/feedback/list"
+            className="text-tokium-green hover:underline font-semibold transition-colors"
+          >
+            送信された内容はこちら
+          </a>
         </div>
+        {/* ▲▲▲ ここまで ▲▲▲ */}
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
           <div>
             <label className="block text-gray-700 font-bold mb-2" htmlFor="reporter">

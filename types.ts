@@ -22,3 +22,17 @@ export enum AppStatus {
   DONE,
   ERROR,
 }
+
+// serverTimestampから返されるオブジェクトの型定義
+interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+}
+
+export interface Feedback {
+  id: string;
+  reporterName: string;
+  type: '機能要望' | 'バグ';
+  content: string;
+  createdAt: FirestoreTimestamp;
+}

@@ -8,6 +8,7 @@ import QuizView from './components/QuizView';
 import AdminDashboard from './components/AdminDashboard';
 import { Quiz, QuizItem } from './types';
 import FeedbackForm from './components/FeedbackForm';
+import FeedbackList from './components/FeedbackList';
 // ↓↓↓ doc と deleteDoc をインポートに追加 ↓↓↓
 import { collection, addDoc, getDocs, doc, deleteDoc } from "firebase/firestore"; 
 import { db } from './firebase';
@@ -128,11 +129,12 @@ const App: React.FC = () => {
       // ↓↓↓ AdminDashboardにdeleteQuiz関数を渡す ↓↓↓
       return <AdminDashboard quizzes={Object.values(quizzes)} deleteQuiz={deleteQuiz} />;
     }
-    {/* ▼▼▼ このブロックを追加！ ▼▼▼ */}
     if (currentRoute === '#/feedback') {
       return <FeedbackForm />;
     }
-    {/* ▲▲▲ ここまで ▲▲▲ */}
+    if (currentRoute === '#/feedback/list') {
+      return <FeedbackList />;
+    }
     return <AdminView addQuiz={addQuiz} />;
   };
 
